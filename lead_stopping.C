@@ -55,11 +55,21 @@ void lead_stopping()
   vector<long> PMT5;
   vector<long> PMT6;
   vector<long> PMT7;
+
+  vector<vector<long>> vectorized_PMT0;
+  vector<vector<long>> vectorized_PMT1;
+  vector<vector<long>> vectorized_PMT2;
+  vector<vector<long>> vectorized_PMT3;
+  vector<vector<long>> vectorized_PMT4;
+  vector<vector<long>> vectorized_PMT5;
+  vector<vector<long>> vectorized_PMT6;
+  vector<vector<long>> vectorized_PMT7;
+
   // vector <long>  PMT1_time;
   // vector <long>  PMT3_time;
   // vector <long>  PMT5_time;
   // vector <long>  PMT7_time;
-  vector<long> decay_time_difference;
+  vector<double> decay_time_difference;
   vector<bool> signal_in_upper;
 
   TTree *time_diff_tree = new TTree("time_diff_tree", "Time differences in muon in and electron out");
@@ -90,15 +100,15 @@ void lead_stopping()
     f->Close();
 
 
-    TTree *split_tree = new TTree("split_tree", "Hits in PMT tubes separated by tube");
-    split_tree->Branch("PMT0", &PMT0);
-    split_tree->Branch("PMT1", &PMT1);
-    split_tree->Branch("PMT2", &PMT2);
-    split_tree->Branch("PMT3", &PMT3);
-    split_tree->Branch("PMT4", &PMT4);
-    split_tree->Branch("PMT5", &PMT5);
-    split_tree->Branch("PMT6", &PMT6);
-    split_tree->Branch("PMT7", &PMT7);
+    // TTree *split_tree = new TTree("split_tree", "Hits in PMT tubes separated by tube");
+    // split_tree->Branch("PMT0", &PMT0);
+    // split_tree->Branch("PMT1", &PMT1);
+    // split_tree->Branch("PMT2", &PMT2);
+    // split_tree->Branch("PMT3", &PMT3);
+    // split_tree->Branch("PMT4", &PMT4);
+    // split_tree->Branch("PMT5", &PMT5);
+    // split_tree->Branch("PMT6", &PMT6);
+    // split_tree->Branch("PMT7", &PMT7);
     
 
 
@@ -166,113 +176,204 @@ void lead_stopping()
 
   cout << "finished splitting input into pmt vectors"<<endl;
 
-  int i_range = 500; //don't search through the whole array
+
+  // this whole section is to chunk the data into individual time chunks that can relate to one another
+  // without this the
+  vector<long> * temp_store;
+  int vectorized_index;
+  long prev;
+
+  temp_store = new vector<long>();
+  vectorized_index = 0;
+  prev = PMT1[0];
+  for (int i = 1; i < PMT1.size(); ++i){
+    long current = PMT1[i];
+    if (prev > 0 && current <= 0){ // looped past max int value
+      vectorized_index++; // move to next index
+      vectorized_PMT1.push_back(*temp_store);
+      temp_store = new vector<long>();
+    }
+    temp_store->push_back(current);
+    prev = current;
+  }
+
+  temp_store = new vector<long>();
+  vectorized_index = 0;
+  prev = PMT3[0];
+  for (int i = 1; i < PMT3.size(); ++i){
+    long current = PMT3[i];
+    if (prev > 0 && current <= 0){ // looped past max int value
+      vectorized_index++; // move to next index
+      vectorized_PMT3.push_back(*temp_store);
+      temp_store = new vector<long>();
+    }
+    temp_store->push_back(current);
+    prev = current;
+  }
+
+  temp_store = new vector<long>();
+  vectorized_index = 0;
+  prev = PMT5[0];
+  for (int i = 1; i < PMT5.size(); ++i){
+    long current = PMT5[i];
+    if (prev > 0 && current <= 0){ // looped past max int value
+      vectorized_index++; // move to next index
+      vectorized_PMT5.push_back(*temp_store);
+      temp_store = new vector<long>();
+    }
+    temp_store->push_back(current);
+    prev = current;
+  }
+
+  temp_store = new vector<long>();
+  vectorized_index = 0;
+  prev = PMT7[0];
+  for (int i = 1; i < PMT7.size(); ++i){
+    long current = PMT7[i];
+    if (prev > 0 && current <= 0){ // looped past max int value
+      vectorized_index++; // move to next index
+      vectorized_PMT7.push_back(*temp_store);
+      temp_store = new vector<long>();
+    }
+    temp_store->push_back(current);
+    prev = current;
+  }  
+
+// temporary. read out stored vector
+  cout << "vectorized_PMT1.size() = "<<vectorized_PMT1.size() << endl;
+  cout << "vectorized_PMT3.size() = "<<vectorized_PMT3.size() << endl;
+  cout << "vectorized_PMT5.size() = "<<vectorized_PMT5.size() << endl;
+  cout << "vectorized_PMT7.size() = "<<vectorized_PMT7.size() << endl;
+
+  // for (int i = 0; i < vectorized_PMT1.size(); i=i+100)
+  // {
+  //   cout << "vectorized_PMT1[" << i << "].size() = "<<vectorized_PMT1[i].size() << endl;
+  //   cout << "vectorized_PMT1[" << i << "][0] = "<<vectorized_PMT1[i][0] << endl;
+  //   cout << "vectorized_PMT1[" << i << "][1] = "<<vectorized_PMT1[i][1] << endl;
+  //   cout << "vectorized_PMT1[" << i << "].end() = "<<vectorized_PMT1[i][vectorized_PMT1[i].size()-1] << endl;
+  //   // cout << "vectorized_PMT1[" << i << "][-2] = "<<vectorized_PMT1[i][-2] << endl;
+  //   cout << endl;
+  // }
+  // return;
+
+  // int i_range = 500; //don't search through the whole array
   int coincidence_threshold = 2; // = 8 ns
   int capture_threshold = 5000; // = 20 microseconds
 
   int stopping_counter = 0;
 
 
-  clock_t begin = clock();
 
+  cout << "Beginning search " << endl;
   // actually look for coincides
-  // PMT1 && PMT3 && ~PMT5 && ~PMT6
-  for (int i = 0; i < PMT1.size(); ++i)
-  {
-    bool coinc_in_1 = false;
-    bool coinc_in_3 = false;
-    bool coinc_in_5 = false;
-    bool coinc_in_7 = false;
-
-
-    if (i%10000 == 0){
-        cout << "i: " << i << "  --- signals: "  << decay_time_difference.size() << "  --- percent complete: "  << (i*100)/nentries << endl;
+  // PMT_A && PMT_B && ~PMT_C && ~PMT_D
+  clock_t begin = clock();
+  int m = 0;
+  int n_chunks = vectorized_PMT1.size();
+  n_chunks = 100; // testing
+  while (m < n_chunks ){
+    if (m%10 == 0){
+      cout << "m: " << m << "  --- signals: "  << decay_time_difference.size() << "  --- percent complete: "  << (m*100)/vectorized_PMT1.size() << endl;
     }
+    // define the PMTs we're looking at. rearranging the physical orer is done here.
+    vector<long> PMT_A = vectorized_PMT1[m];
+    vector<long> PMT_B = vectorized_PMT3[m];
+    vector<long> PMT_C = vectorized_PMT5[m];
+    vector<long> PMT_D = vectorized_PMT7[m];
 
-    for (int j = -i_range; j < i_range; ++j)
+    for (int i = 0; i < PMT_A.size(); ++i)
     {
-      // cout << "PMT1[i_1]: " << PMT1[i_1] << "   PMT3[j_3]: " << PMT3[j_3] << endl;  
-      int k = max(i+j,0); // don't look below 0
-      if (abs(PMT1[i] - PMT3[k]) < coincidence_threshold)
-        coinc_in_3 = true;
-      if (abs(PMT1[i] - PMT5[k]) < coincidence_threshold){
-        coinc_in_5 = true;
-        break;
+      bool coinc_in_A = true;
+      bool coinc_in_B = false;
+      bool coinc_in_C = false;
+      bool coinc_in_D = false;
+
+
+
+      for (int j = 0; j < PMT_B.size(); ++j)
+      {
+        if ((PMT_B[j] - PMT_A[i]) > coincidence_threshold) break; // don't look beyond where it might be
+        if (abs(PMT_B[j] - PMT_A[i]) <= coincidence_threshold) // found coincidence
+          coinc_in_B = true;
+        if (abs(PMT_C[j] - PMT_A[i]) <= coincidence_threshold){
+          coinc_in_C = true;
+          break;
+        }
+        if (abs(PMT_D[j] - PMT_A[i]) <= coincidence_threshold){
+          coinc_in_D = true;
+          break;
+        }
       }
-      if (abs(PMT1[i] - PMT7[k]) < coincidence_threshold){
-        coinc_in_7 = true;
-        break;
+
+      // found a muon stopping event. now see if it decays into the top of bottom pmts
+      if (coinc_in_B && !coinc_in_C && !coinc_in_C){
+        stopping_counter++;
+        long muon_in_time = PMT_A[i];
+        long electron_out_time_PMT_A = 666;
+        long electron_out_time_PMT_B = 666;
+        long electron_out_time_PMT_C = 666;
+        long electron_out_time_PMT_D = 666;
+
+        bool second_coinc_in_A = false;
+        bool second_coinc_in_B = false;
+        bool second_coinc_in_C = false;
+        bool second_coinc_in_D = false;
+
+        for (int k = 0; k < PMT_A.size(); ++k){
+          // this would indicate an escaping electron after muon capture
+          if (abs(PMT_A[k] - muon_in_time) <= capture_threshold){ 
+            // but don't count the initial coincidence 
+            if (PMT_A[k] - muon_in_time > coincidence_threshold){
+              second_coinc_in_A = true;
+              electron_out_time_PMT_A = PMT_A[k];
+            }
+          }
+
+          if (abs(PMT_B[k] - muon_in_time) <= capture_threshold){
+            if (PMT_B[k] - muon_in_time > coincidence_threshold){ 
+              second_coinc_in_B = true;
+              electron_out_time_PMT_B = PMT_B[k];
+            }
+          }
+          if (abs(PMT_C[k] - muon_in_time) <= capture_threshold){
+            if (PMT_C[k] - muon_in_time > coincidence_threshold){ 
+              second_coinc_in_C = true;
+              electron_out_time_PMT_C = PMT_C[k];
+            }
+          }
+          if (abs(PMT_D[k] - muon_in_time) <= capture_threshold){
+            if (PMT_D[k] - muon_in_time > coincidence_threshold){ 
+              second_coinc_in_D = true;
+              electron_out_time_PMT_D = PMT_D[k];
+            }
+          }
+        }
+
+        // do logical checks 
+        // PMT_A && PMT_B && ~PMT_C && ~PMT_D
+        if (second_coinc_in_A && second_coinc_in_B && !second_coinc_in_C && !second_coinc_in_D){
+          // check if truly an escaping electron
+          if (abs(electron_out_time_PMT_A - electron_out_time_PMT_B) < coincidence_threshold){
+            // store the average time difference
+            decay_time_difference.push_back((electron_out_time_PMT_A + electron_out_time_PMT_B)/2.0 - muon_in_time);
+            signal_in_upper.push_back(true);
+          }
+        }
+        // ~PMT_A && ~PMT_B && PMT_C && PMT_D
+        if (!second_coinc_in_A && !second_coinc_in_B && second_coinc_in_C && second_coinc_in_D){
+          // check if truly an escaping electron
+          if (abs(electron_out_time_PMT_C - electron_out_time_PMT_D) < coincidence_threshold){
+            // store the average time difference
+            decay_time_difference.push_back((electron_out_time_PMT_C + electron_out_time_PMT_D)/2.0 - muon_in_time);
+            signal_in_upper.push_back(false);
+          }
+        }
+
       }
     }
 
-    // found a muon stopping event. now see if it decays into the top of bottom pmts
-    if (coinc_in_3 && !coinc_in_5 && !coinc_in_5){
-      stopping_counter++;
-      long muon_in_time = PMT1[i];
-      long electron_out_time_PMT1 = 666;
-      long electron_out_time_PMT3 = 666;
-      long electron_out_time_PMT5 = 666;
-      long electron_out_time_PMT7 = 666;
-
-      bool second_coinc_in_1 = false;
-      bool second_coinc_in_3 = false;
-      bool second_coinc_in_5 = false;
-      bool second_coinc_in_7 = false;
-
-      for (int jj = -i_range; jj < i_range; ++jj){
-        int kk = max(i+jj,0); // don't look below 0
-        // this would indicate an escaping electron after muon capture
-        if (abs(PMT1[kk] - muon_in_time) < capture_threshold){ 
-          // but don't count the initial coincidence 
-          if (PMT1[kk] - muon_in_time > coincidence_threshold){
-            second_coinc_in_1 = true;
-            electron_out_time_PMT1 = PMT1[kk];
-          }
-        }
-
-        if (abs(PMT3[kk] - muon_in_time) < capture_threshold){
-          if (PMT3[kk] - muon_in_time > coincidence_threshold){ 
-            second_coinc_in_3 = true;
-            electron_out_time_PMT3 = PMT3[kk];
-          }
-        }
-        if (abs(PMT5[kk] - muon_in_time) < capture_threshold){
-          if (PMT5[kk] - muon_in_time > coincidence_threshold){ 
-            second_coinc_in_5 = true;
-            electron_out_time_PMT5 = PMT5[kk];
-          }
-        }
-        if (abs(PMT7[kk] - muon_in_time) < capture_threshold){
-          if (PMT7[kk] - muon_in_time > coincidence_threshold){ 
-            second_coinc_in_7 = true;
-            electron_out_time_PMT7 = PMT7[kk];
-          }
-        }
-      }
-
-      // do logical checks 
-      // PMT1 && PMT3 && ~PMT5 && ~PMT7
-      if (second_coinc_in_1 && second_coinc_in_3 && !second_coinc_in_5 && !second_coinc_in_7){
-        // check if truly an escaping electron
-        if (abs(electron_out_time_PMT1 - electron_out_time_PMT3) < coincidence_threshold){
-          // store the average time difference
-          decay_time_difference.push_back((electron_out_time_PMT1 + electron_out_time_PMT3)/2 - muon_in_time);
-          signal_in_upper.push_back(true);
-        }
-      }
-      // ~PMT1 && ~PMT3 && PMT5 && PMT7
-      if (!second_coinc_in_1 && !second_coinc_in_3 && second_coinc_in_5 && second_coinc_in_7){
-        // check if truly an escaping electron
-        if (abs(electron_out_time_PMT5 - electron_out_time_PMT7) < coincidence_threshold){
-          // store the average time difference
-          decay_time_difference.push_back((electron_out_time_PMT5 + electron_out_time_PMT7)/2 - muon_in_time);
-          signal_in_upper.push_back(false);
-        }
-      }
-
-    }
+    m++;
   }
-
   time_diff_tree->Fill();
 
 
@@ -295,13 +396,13 @@ void lead_stopping()
 
   // TTree *split_tree = new TTree("Split_Tree", "Hits in PMT tubes separated by tube");
   // split_tree->Branch("PMT0", &PMT0);
-  // split_tree->Branch("PMT1", &PMT1);
+  // split_tree->Branch("PMT_A", &PMT1);
   // split_tree->Branch("PMT2", &PMT2);
-  // split_tree->Branch("PMT3", &PMT3);
+  // split_tree->Branch("PMT_B", &PMT_B);
   // split_tree->Branch("PMT4", &PMT4);
-  // split_tree->Branch("PMT5", &PMT5);
+  // split_tree->Branch("PMT_C", &PMT5);
   // split_tree->Branch("PMT6", &PMT6);
-  // split_tree->Branch("PMT7", &PMT7);
+  // split_tree->Branch("PMT_D", &PMT7);
 
   // ifstream infile( "run000047_split/xaa" );
 
@@ -326,7 +427,7 @@ void lead_stopping()
   //       PMT1_time.push_back(record_time);
   //       break;
   //     case 3:
-  //       PMT3_time.push_back(record_time);
+  //       PMT_B_time.push_back(record_time);
   //       break;
   //     case 5:
   //       PMT5_time.push_back(record_time);
