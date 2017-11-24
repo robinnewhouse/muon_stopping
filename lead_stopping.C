@@ -164,9 +164,11 @@ void lead_stopping()
     }    
   }
 
+  cout << "finished splitting input into pmt vectors"<<endl;
+
   int i_range = 500; //don't search through the whole array
-  int coincidence_threshold = 20;
-  int capture_threshold = 4000;
+  int coincidence_threshold = 2; // = 8 ns
+  int capture_threshold = 5000; // = 20 microseconds
 
   int stopping_counter = 0;
 
@@ -182,6 +184,10 @@ void lead_stopping()
     bool coinc_in_5 = false;
     bool coinc_in_7 = false;
 
+
+    if (i%10000 == 0){
+        cout << "i: " << i << "  --- signals: "  << decay_time_difference.size() << "  --- percent complete: "  << (i*100)/nentries << endl;
+    }
 
     for (int j = -i_range; j < i_range; ++j)
     {
