@@ -270,16 +270,16 @@ void lead_stopping()
   clock_t begin = clock();
   int m = 0;
   int n_chunks = vectorized_PMT1.size();
-  n_chunks = 100; // testing
+  // n_chunks = 100; // testing
   while (m < n_chunks ){
     if (m%10 == 0){
       cout << "m: " << m << "  --- signals: "  << decay_time_difference.size() << "  --- percent complete: "  << (m*100)/vectorized_PMT1.size() << endl;
     }
     // define the PMTs we're looking at. rearranging the physical orer is done here.
-    vector<long> PMT_A = vectorized_PMT1[m];
-    vector<long> PMT_B = vectorized_PMT3[m];
-    vector<long> PMT_C = vectorized_PMT5[m];
-    vector<long> PMT_D = vectorized_PMT7[m];
+    vector<long> PMT_A = vectorized_PMT7[m];
+    vector<long> PMT_B = vectorized_PMT5[m];
+    vector<long> PMT_C = vectorized_PMT3[m];
+    vector<long> PMT_D = vectorized_PMT1[m];
 
     for (int i = 0; i < PMT_A.size(); ++i)
     {
@@ -355,7 +355,7 @@ void lead_stopping()
           // check if truly an escaping electron
           if (abs(electron_out_time_PMT_A - electron_out_time_PMT_B) < coincidence_threshold){
             // store the average time difference
-            decay_time_difference.push_back((electron_out_time_PMT_A + electron_out_time_PMT_B)/2.0 - muon_in_time);
+            decay_time_difference.push_back(((electron_out_time_PMT_A + electron_out_time_PMT_B)/2.0 - muon_in_time)*4.0);
             signal_in_upper.push_back(true);
           }
         }
@@ -364,7 +364,7 @@ void lead_stopping()
           // check if truly an escaping electron
           if (abs(electron_out_time_PMT_C - electron_out_time_PMT_D) < coincidence_threshold){
             // store the average time difference
-            decay_time_difference.push_back((electron_out_time_PMT_C + electron_out_time_PMT_D)/2.0 - muon_in_time);
+            decay_time_difference.push_back(((electron_out_time_PMT_C + electron_out_time_PMT_D)/2.0 - muon_in_time)*4.0);
             signal_in_upper.push_back(false);
           }
         }
@@ -387,7 +387,7 @@ void lead_stopping()
   cout << "signal event counter: "<< decay_time_difference.size() << endl;
   cout << "time elapsed for search: " << elapsed_secs << endl;
 
-  TFile *file = new TFile("decay_time_difference.root", "RECREATE");
+  TFile *file = new TFile("decay_time_difference_run47_PMT_Tree4.root", "RECREATE");
   file->cd();
   time_diff_tree->Write();
   file->Close();
