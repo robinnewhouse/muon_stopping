@@ -20,7 +20,7 @@ vector<bool> * signal_in_upper;
 
 void importTfile(){
 
-TFile *myfile = TFile::Open("decay_time_difference.root");  // insert name of file here
+TFile *myfile = TFile::Open("decay_time_difference_full.root");  // insert name of file here
 TTree * time_diff_tree = (TTree*) myfile->Get("time_diff_tree;1");
 time_diff_tree->SetBranchAddress("decay_time_difference", &decay_time_difference);  //insert variable names here 
 time_diff_tree->SetBranchAddress("signal_in_upper", &signal_in_upper);
