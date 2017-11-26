@@ -85,6 +85,7 @@ void lead_stopping_full()
     TTree *pmt_tree = new TTree("PMT_Tree", "Hits in PMT tubes");
     pmt_tree->ReadFile("run000047.txt","time/L:channel/b:charge/i",',');
     pmt_tree->ReadFile("run000048.txt","time/L:channel/b:charge/i",',');
+    pmt_tree->ReadFile("run000049.txt","time/L:channel/b:charge/i",',');
     TBranch        *b_time;   //!
     TBranch        *b_channel;   //!
     TBranch        *b_charge;   //!
@@ -242,7 +243,7 @@ void lead_stopping_full()
   // return;
 
   // int i_range = 500; //don't search through the whole array
-  int coincidence_threshold = 2; // = 8 ns
+  int coincidence_threshold = 0; // = 8 ns
   int capture_threshold = 5000; // = 20 microseconds
 
   int stopping_counter = 0;
@@ -338,7 +339,7 @@ void lead_stopping_full()
         // PMT_A && PMT_B && ~PMT_C && ~PMT_D
         if (second_coinc_in_A && second_coinc_in_B && !second_coinc_in_C && !second_coinc_in_D){
           // check if truly an escaping electron
-          if (abs(electron_out_time_PMT_A - electron_out_time_PMT_B) < coincidence_threshold){
+          if (abs(electron_out_time_PMT_A - electron_out_time_PMT_B) <= coincidence_threshold){
             // store the average time difference
             decay_time_difference.push_back(((electron_out_time_PMT_A + electron_out_time_PMT_B)/2.0 - muon_in_time)*4.0);
             signal_in_upper.push_back(true);
@@ -347,7 +348,7 @@ void lead_stopping_full()
         // ~PMT_A && ~PMT_B && PMT_C && PMT_D
         if (!second_coinc_in_A && !second_coinc_in_B && second_coinc_in_C && second_coinc_in_D){
           // check if truly an escaping electron
-          if (abs(electron_out_time_PMT_C - electron_out_time_PMT_D) < coincidence_threshold){
+          if (abs(electron_out_time_PMT_C - electron_out_time_PMT_D) <= coincidence_threshold){
             // store the average time difference
             decay_time_difference.push_back(((electron_out_time_PMT_C + electron_out_time_PMT_D)/2.0 - muon_in_time)*4.0);
             signal_in_upper.push_back(false);
